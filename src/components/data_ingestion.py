@@ -5,6 +5,8 @@ from src.logger import logging
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
+from src.components.data_transformation import DataTransformation,DataTransformationConfig
+from src.components.model_trainer import ModelTrainer, ModelTrainerConfig
 
 @dataclass
 class DataIngestionConfig():
@@ -22,6 +24,8 @@ class DataIngestion():
         try:
             df = pd.read_csv("notebook\data\stud.csv")
             logging.info("dataset read successfully")
+            
+            
             
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path),exist_ok=True)
             
@@ -45,5 +49,12 @@ class DataIngestion():
         
 if __name__ == "__main__":
     obj = DataIngestion()
-    obj.initiate_data_ingestion()
+    train_data,tes_data = obj.initiate_data_ingestion()
+    
+    data_transformation = DataTransformation()
+    train_arr, test_arr,_ = data_transformation.inititate_data_transformation(train_data,tes_data)
+    
+    model_trainer = ModelTrainer()
+    print(model_trainer.initiate_model_trainer(train_arr,test_arr))
+
         
