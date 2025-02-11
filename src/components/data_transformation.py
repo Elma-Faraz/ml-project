@@ -179,10 +179,12 @@ from src.logger import logging
 from src.utils import save_object
 
 class DataTransformationConfig:
-    preprocessor_obj_file_path =  os.path.join("artifacts", "preproceeor.pkl")
+    #path to save preprocessor.pkl file
+    preprocessor_obj_file_path =  os.path.join("artifacts", "preprocessor.pkl")
 
 class DataTransformation:
     def __init__(self):
+        #object of class DataTransformationConfig
         self.data_transformation_config = DataTransformationConfig()
 
     def get_data_transformer_object(self):
@@ -190,6 +192,7 @@ class DataTransformation:
         this method is responsible for data transormation based on the different types of data.
         '''
         try:
+            #segregating numerical and categorical columns
             numerical_columns = ["writing_score", "reading_score"]
             categorical_columns = [
                 "gender",
@@ -198,7 +201,8 @@ class DataTransformation:
                 "lunch",
                 "test_preparation_course"
             ]
-
+            
+            #adding missing values using Simple imputer and normalizing data using StandardScaler
             num_pipeline = Pipeline(
                 steps=[
                     ("imputer",SimpleImputer(strategy="median")),
@@ -206,6 +210,9 @@ class DataTransformation:
                 ]
             )
 
+            #Simple Imputer add missing values in data
+            #one hot encoder encode the categorical data
+            #Standard Scaler normalizes the data
             cat_pipeline = Pipeline(
                 steps=[
                     ("imputer",SimpleImputer(strategy="most_frequent")),
@@ -216,7 +223,8 @@ class DataTransformation:
 
             logging.info("Numerical columns standar scaling completed")
             logging.info("Categorical columns encoding completed")
-
+            
+            #applying above pipeline to column transfer model
             preprocessor = ColumnTransformer(
                 [
                 ("num_pipeline",num_pipeline,numerical_columns),
@@ -231,41 +239,48 @@ class DataTransformation:
 
     def inititate_data_transformation(self,train_path,test_path):
         try:
+            #reading training data
             train_df = pd.read_csv(train_path)
-            print("****235",train_df.columns)
-            print("*****236",train_df.shape)
+            #reading test dataset
             test_df = pd.read_csv(test_path)
 
             logging.info("read train and test data completed")
 
             logging.info("obtaining processing oject")
-
+            
+            #creating preprocessing object to implement preprocessing on training and test data
             preprocessing_obj = self.get_data_transformer_object()
 
             target_column_name = "math_score"
             numerical_columns = ["writing_score","reading_score"]
-
+            
+            #splitting training data into predictors and target
             input_feature_train_df = train_df.drop(columns=[target_column_name], axis=1)
             targte_feature_train_df = train_df[target_column_name]
-
+            
+            #splitting test data into predictors and target
             input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
             targte_feature_test_df = test_df[target_column_name]
 
             logging.info("applying preprocessing object on training dataset and testing dataset")
-
+            
+            #implementing preprocessing steps on training and test predictors
             input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
-
+            
+            #Concatinating preprocessed predictors with the target
             train_arr = np.c_[input_feature_train_arr,np.array(targte_feature_train_df)]
             test_arr = np.c_[input_feature_test_arr,np.array(targte_feature_test_df)]
 
             logging.info("saved processing object")
-
+            
+            #saving the preprocessing data into preprocessor.pkl file
             save_object(
                 file_path=self.data_transformation_config.preprocessor_obj_file_path,
                 obj = preprocessing_obj
                 )
-
+            
+            #returning the concatenated arrays and preprocessor file path
             return (
             train_arr,
             test_arr,

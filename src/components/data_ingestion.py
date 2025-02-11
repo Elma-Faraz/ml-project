@@ -25,16 +25,19 @@ class DataIngestion():
             df = pd.read_csv("notebook\data\stud.csv")
             logging.info("dataset read successfully")
             
-            
-            
+            #creates artifacts folder
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path),exist_ok=True)
             
+            #saving dataset to raw data path
             df.to_csv(self.ingestion_config.raw_data_path, index=False, header=True)
             
             logging.info("train test split started")
             train_data, test_data = train_test_split(df, test_size=0.2, random_state=42)
             
+            #saving train data to train data path
             train_data.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
+            
+            #saving test data to test data path
             test_data.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
             
             logging.info("Data ingestion completed")
